@@ -6,23 +6,25 @@
   <script src="js/jquery-1.7.1.min.js"></script>
   <script src="js/jquery.terminal-0.4.11.js"></script>
   <script src="js/jquery.mousewheel.min.js"></script>
+  <script src="js/jquery-ui-1.8.19.custom.min.js"></script>
+  <script src="bootstrap/js/bootstrap.js"></script>
+  <script src="bootstrap-plugins/bootstrap-modal.js"></script>
+
   <link href="css/jquery.terminal.css" rel="stylesheet"/>
   <link href="bootstrap/css/bootstrap-responsive.css" rel="stylesheet"/>
   <link href="bootstrap/css/bootstrap.css" rel="stylesheet"/>
-  <script src="bootstrap/js/bootstrap.js"></script>
-  <script src="bootstrap-plugins/bootstrap-modal.js"></script>
   <link href="css/custom.css" rel="stylesheet"/>
 </head>
 <body id="terminals">
- <ul class="nav nav-tabs" id="tabs">
- </ul>
+  <ul class="nav nav-tabs" id="tabs">
+  </ul>
 
   <div id="overlays">
     <div id="info" style="top: 100px; left: 700px"></div>
   </div>
 
 
-  <div class="modal hide fade" id="loginModal">
+  <div class="modal hide fade" id="login-modal">
     <div class="modal-header">
       <a class="close" data-dismiss="modal">×</a>
       <h3>Login</h3>
@@ -32,8 +34,48 @@
         <input type="text" class="span3" placeholder="Nick" id="nick-input">
         <input type="password" class="span3" placeholder="Password">
         <p id="login-text"></p>
-        <a class="btn btn-primary" id="loginBtn">Submit</a>
-        <!-- <button type="submit" class="btn btn-primary" id="loginBtn">Submit</button> -->
+        <a class="btn btn-primary" id="login-btn">Login</a>
+        <a class="btn" id="register-btn">Register</a>
+        <!-- <button type="submit" class="btn btn-primary" id="login-btn">Submit</button> -->
+      </form>
+    </div>
+  </div>
+
+  <div class="modal hide fade" id="register-modal">
+    <div class="modal-header">
+      <a class="close" data-dismiss="modal">×</a>
+      <h3>Register</h3>
+    </div>
+    <div class="modal-body">
+      <form class="form-horizontal">
+        <fieldset>
+          <legend>Controls Bootstrap supports</legend>
+          <div class="control-group" id="nick-input-group">
+            <label class="control-label" for="nick-input">Nick</label>
+            <div class="controls">
+              <input type="text" class="input-xlarge" id="nick-input">
+              <span class="control-group error" id="nick-error-span"></span>
+            </div>
+          </div>
+          <div class="control-group" id="password-input-group-1">
+            <label class="control-label" for="password-input-1">Enter password</label>
+            <div class="controls">
+              <input type="password" class="input-xlarge" id="password-input-1">
+              <span class="control-group error" id="password-error-span1"></span>
+            </div>
+          </div>
+          <div class="control-group" id="password-input-group-2">
+            <label class="control-label" for="input01">Repeat password</label>
+            <div class="controls">
+              <input type="password" class="input-xlarge" id="password-input-2">
+              <span class="control-group error" id="password-error-span2"></span>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Save changes</button>
+            <button class="btn">Cancel</button>
+          </div>
+        </fieldset>
       </form>
     </div>
   </div>
@@ -96,27 +138,29 @@ function Parser (text) {
 function handle_msg (msg) {
   var parser = new Parser(msg);
   var cmd = parser.getNextToken();
+
+  var chan_element = $("#" + chan);
   if (cmd === 'msg') {
     var from = parser.getNextToken();
     var chan = parser.getNextToken();
     var m = parser.getRest();
     if (from !== nick)
-      $("#" + chan).terminal().echo(from + "> " + m);
+      chan_element.terminal().echo(from + "> " + m);
   } else if (cmd === 'join') {
     var user = parser.getNextToken();
     var chan = parser.getNextToken();
-    $("#" + chan).data('channel').add_user(user);
-    $("#" + chan).terminal().echo(user + " has joined the channel.");
+    chan_element.data('channel').add_user(user);
+    chan_element.terminal().echo(user + " has joined the channel.");
   } else if (cmd === 'leave') {
     var user = parser.getNextToken();
     var chan = parser.getNextToken();
-    $("#" + chan).data('channel').remove_user(user);
-    $("#" + chan).terminal().echo(user + " has left the channel.");
+    chan_element.data('channel').remove_user(user);
+    chan_element.terminal().echo(user + " has left the channel.");
   } else if (cmd === 'users') {
     var chan = parser.getNextToken();
     var users = parser.getRest().split(',');
     for (var i = 0; i < users.length; i++) {
-      $("#" + chan).data('channel').add_user(users[i]);
+      chan_element.data('channel').add_user(users[i]);
     }
   } else {
     for (var i = 0; i < terminals.length; i++) {
@@ -214,23 +258,31 @@ function update_user_info_div (users) {
 }
 
 $(document).ready(function () {
-  $("#loginModal").modal('show');
-  $("#loginBtn").click(function () {
+  $("#login-modal").modal('show');
+  $("#login-btn").click(function () {
     $("#login-text").html("Logging in..");
     send("login " + $("#nick-input").val());
     nick = $("#nick-input").val();
 
+    // for some reason, sending join cmd without waiting doesn't seem like sending the cmd
     setTimeout(function () {
       send("join oda");
-    }, 2000);
+    }, 1000);
 
     $("#login-text").html("");
-    $("#loginModal").modal('hide');
+    $("#login-modal").modal('hide');
     add_terminal('oda');
     switch_terminal('oda');
     $("#tabs").append('');
   });
 
+  $("#register-btn").click(function () {
+    console.log("ok");
+    $("#login-modal").modal('hide');
+    setTimeout(function () {
+      $("#register-modal").modal('show');
+    }, 300);
+  });
     // nick = "osa1";
 
     // add_terminal('oda');
@@ -239,49 +291,7 @@ $(document).ready(function () {
     // $("#tabs").append('');
 
 
-  // (function($) {
-
-  // $.fn.disableSelection = function() {
-  //     return this.each(function() {
-  //         $(this).attr('unselectable', 'on')
-  //                .css({
-  //                    '-moz-user-select':'none',
-  //                    '-webkit-user-select':'none',
-  //                    'user-select':'none',
-  //                    '-ms-user-select':'none'
-  //                })
-  //                .each(function() {
-  //                    this.onselectstart = function() { return false; };
-  //                });
-  //     });
-  // };
-
-  // })(jQuery);
-
-  // $("#info").disableSelection();
-
-    // dragging info panel ----------------------
-    var drag_overlay = false;
-    var drag_rel_x, drag_rel_y;
-
-    $("#info").mousedown(function (e) {
-      drag_overlay = true;
-      drag_rel_x = e.clientX - $("#info").css("left").replace("px", "");
-      drag_rel_y = e.clientY - $("#info").css("top").replace("px", "");
-    });
-
-    $("body").mouseup(function (e) {
-      drag_overlay = false;
-    });
-
-    $("#info").mousemove(function (e) {
-      if (drag_overlay) {
-        $("#info").css("left", (e.clientX - drag_rel_x) + "px");
-        $("#info").css("top", (e.clientY - drag_rel_y) + "px");
-      }
-    });
-    // ------------------------------------------
-
+  $("#info").draggable();
 });
 </script>
 
