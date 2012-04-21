@@ -17,6 +17,7 @@
 </head>
 <body id="terminals">
   <ul class="nav nav-tabs" id="tabs">
+    <li id="join-channel"><a>Join channel</a></li>
   </ul>
 
   <div id="overlays">
@@ -34,7 +35,6 @@
         <input type="text" class="span3" placeholder="Nick" id="nick-input">
         <input type="password" class="span3" placeholder="Password">
         <p id="login-text"></p>
-        <!-- <button type="submit" class="btn btn-primary" id="login-btn">Submit</button> -->
       </form>
     </div>
 
@@ -144,28 +144,41 @@ function handle_msg (msg) {
   var parser = new Parser(msg);
   var cmd = parser.getNextToken();
 
-  var chan_element = $("#" + chan);
   if (cmd === 'msg') {
     var from = parser.getNextToken();
     var chan = parser.getNextToken();
+    var chan_element = $("#" + chan);
     var m = parser.getRest();
     if (from !== nick)
       chan_element.terminal().echo(from + "> " + m);
   } else if (cmd === 'join') {
     var user = parser.getNextToken();
     var chan = parser.getNextToken();
+    var chan_element = $("#" + chan);
     chan_element.data('channel').add_user(user);
     chan_element.terminal().echo(user + " has joined the channel.");
   } else if (cmd === 'leave') {
     var user = parser.getNextToken();
     var chan = parser.getNextToken();
+    var chan_element = $("#" + chan);
     chan_element.data('channel').remove_user(user);
     chan_element.terminal().echo(user + " has left the channel.");
   } else if (cmd === 'users') {
     var chan = parser.getNextToken();
     var users = parser.getRest().split(',');
+    if (terminals.indexOf(chan) === -1) {
+      add_terminal(chan);
+    }
+    var chan_element = $("#" + chan);
     for (var i = 0; i < users.length; i++) {
       chan_element.data('channel').add_user(users[i]);
+    }
+  } else if (cmd === 'login') {
+    var t1 = parser.getNextToken();
+    if (t1 === 'ok') {
+      login_ok();
+    } else if (t1 === 'nickinuse') {
+      $("#login-text").html("Nick is in use.");
     }
   } else {
     for (var i = 0; i < terminals.length; i++) {
@@ -197,9 +210,16 @@ function add_terminal (name) {
   });
 
   var tab_name = name + "_tab";
-  $("#tabs").append('<li id="' + tab_name + '"><a>' + name + '</a></li>');
+  $("#tabs").append('<li id="' + tab_name + '"><a>' + name + ' <span id="close-' + name + '"> [x]</a>'
+                      + '</span></li>');
   $("#" + tab_name).click(function () {
     switch_terminal(name);
+  });
+
+  $("#close-" + name).click(function () {
+    if (current_terminal === name) {
+      close_terminal(name);
+    }
   });
 
   $("#" + name).data('channel', new Channel(name));
@@ -225,6 +245,7 @@ function Channel (name) {
 }
 
 function close_terminal (name) {
+  send("leave " + name);
   $("#" + name).remove();
   $("#" + name + "_tab").remove();
 
@@ -262,6 +283,19 @@ function update_user_info_div (users) {
   }
 }
 
+function login_ok () {
+  $("#login-text").html("");
+  $("#login-modal").modal('hide');
+  add_terminal('oda');
+  switch_terminal('oda');
+  // $("#tabs").append('');
+
+  // for some reason, sending join cmd without waiting doesn't seem like sending the cmd
+  setTimeout(function () {
+    send("join oda");
+  }, 1000);
+}
+
 $(document).ready(function () {
   $("#login-modal").modal('show');
   $("#login-btn").click(function () {
@@ -269,16 +303,11 @@ $(document).ready(function () {
     send("login " + $("#nick-input").val());
     nick = $("#nick-input").val();
 
-    // for some reason, sending join cmd without waiting doesn't seem like sending the cmd
-    setTimeout(function () {
-      send("join oda");
-    }, 1000);
-
-    $("#login-text").html("");
-    $("#login-modal").modal('hide');
-    add_terminal('oda');
-    switch_terminal('oda');
-    $("#tabs").append('');
+//    $("#login-text").html("");
+//    $("#login-modal").modal('hide');
+//    add_terminal('oda');
+//    switch_terminal('oda');
+//    $("#tabs").append('');
   });
 
   $("#register-btn").click(function () {
@@ -328,12 +357,9 @@ $(document).ready(function () {
     });
   });
 
-    // nick = "osa1";
-
-    // add_terminal('oda');
-    // current_terminal = 'oda';
-    // // switch_terminal('oda');
-    // $("#tabs").append('');
+  $("#join-channel").click(function () {
+    $("#" + current_terminal).terminal().insert("/join ");
+  });
 
 
   $("#info").draggable();
