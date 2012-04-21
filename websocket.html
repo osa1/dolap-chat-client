@@ -34,10 +34,13 @@
         <input type="text" class="span3" placeholder="Nick" id="nick-input">
         <input type="password" class="span3" placeholder="Password">
         <p id="login-text"></p>
-        <a class="btn btn-primary" id="login-btn">Login</a>
-        <a class="btn" id="register-btn">Register</a>
         <!-- <button type="submit" class="btn btn-primary" id="login-btn">Submit</button> -->
       </form>
+    </div>
+
+    <div class="modal-footer">
+      <a class="btn btn-primary" id="login-btn">Login</a>
+      <a class="btn" id="register-btn">Register</a>
     </div>
   </div>
 
@@ -47,13 +50,13 @@
       <h3>Register</h3>
     </div>
     <div class="modal-body">
-      <form class="form-horizontal">
+      <form class="form-horizontal" id="register-form">
         <fieldset>
-          <legend>Controls Bootstrap supports</legend>
+          <!-- <legend>Register</legend> -->
           <div class="control-group" id="nick-input-group">
             <label class="control-label" for="nick-input">Nick</label>
             <div class="controls">
-              <input type="text" class="input-xlarge" id="nick-input">
+              <input type="text" class="input-xlarge" id="nick-register-input">
               <span class="control-group error" id="nick-error-span"></span>
             </div>
           </div>
@@ -69,14 +72,16 @@
             <div class="controls">
               <input type="password" class="input-xlarge" id="password-input-2">
               <span class="control-group error" id="password-error-span2"></span>
+              <p class="help-block" id="register-form-help-block"></p>
             </div>
-          </div>
-          <div class="form-actions">
-            <button type="submit" class="btn btn-primary">Save changes</button>
-            <button class="btn">Cancel</button>
           </div>
         </fieldset>
       </form>
+    </div>
+
+    <div class="modal-footer">
+      <a class="btn btn-primary" id="register-accept-btn">Register</a>
+      <a class="btn" id="cancel-register-btn">Cancel</a>
     </div>
   </div>
 
@@ -282,7 +287,47 @@ $(document).ready(function () {
     setTimeout(function () {
       $("#register-modal").modal('show');
     }, 300);
+
+    $("#cancel-register-btn").click(function () {
+      $("#register-modal").modal('hide');
+      setTimeout(function () {
+        $("#login-modal").modal('show');
+      }, 300);
+    });
+
+    $("#register-accept-btn").click(function () {
+      var nick = $("#nick-register-input").val();
+      var pwd = $("#password-input-1").val();
+      var pwd2 = $("#password-input-2").val();
+      var err = false;
+      if (pwd !== pwd2) {
+        $("#password-input-group-1").addClass("error");
+        $("#password-error-span1").html("Passwords doesn't match.");
+        $("#password-input-group-2").addClass("error");
+        err = true;
+      } else {
+        $("#password-input-group-1").removeClass("error");
+        $("#password-input-group-2").removeClass("error");
+        $("#password-error-span1").html("");
+      }
+
+      if (nick.length < 4) {
+        $("#nick-error-span").html("Nick should be longer than 3 characters.");
+        $("#nick-input-group").addClass("error");
+        err = true;
+      } else {
+        $("nick-error-span").html("");
+        $("#nick-input-group").removeClass("error");
+      }
+
+      if (!err) {
+        $("#register-form-help-block").html("Register....");
+      }
+
+      console.log("accept register");
+    });
   });
+
     // nick = "osa1";
 
     // add_terminal('oda');
