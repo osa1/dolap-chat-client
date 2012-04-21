@@ -108,7 +108,10 @@ socket.onmessage = function (evt) {
 };
 
 socket.onclose = function (e) {
-  console.log("close: " + e.code + " " + e.reason);
+  for (var i = 0; i < terminals.length; i++) {
+    var term = $("#" + terminals[i]);
+    term.terminal().error("Disconnected.");
+  }
 };
 
 socket.onerror = function (e) {
